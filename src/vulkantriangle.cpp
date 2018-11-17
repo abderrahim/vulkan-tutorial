@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <functional>
 #include <cstdlib>
+#include <vector>
+#include <cstring>
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -52,6 +54,26 @@ private:
         const char** glfwExtensions;
 
         glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        /* Check for available extensions */
+        uint32_t extensionCount = 0;
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+        std::vector<VkExtensionProperties> extensions(extensionCount);
+        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+        for (uint i = 0; i < glfwExtensionCount; i++) {
+            bool found = false;
+            for (const auto& extension : extensions) {
+                if (!strcmp(glfwExtensions[i], extension.extensionName)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                throw std::runtime_error ("missing required extension " + std::string(glfwExtensions[i]));
+            }
+        }
 
         createInfo.enabledExtensionCount = glfwExtensionCount;
         createInfo.ppEnabledExtensionNames = glfwExtensions;
