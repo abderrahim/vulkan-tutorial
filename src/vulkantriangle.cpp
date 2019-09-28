@@ -33,6 +33,7 @@ public:
 private:
     GLFWwindow* window;
     VkInstance instance;
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
     void initWindow() {
         glfwInit();
@@ -45,6 +46,7 @@ private:
 
     void initVulkan() {
         createInstance();
+        pickPhysicalDevice();
     }
 
     void createInstance() {
@@ -125,6 +127,32 @@ private:
                 return false;
         }
 
+        return true;
+    }
+
+    void pickPhysicalDevice() {
+        uint32_t deviceCount;
+
+        vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+        if (deviceCount == 0)
+            throw std::runtime_error("no vulkan supported device found");
+
+        std::vector<VkPhysicalDevice> devices(deviceCount);
+
+        vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+        for (const auto& device : devices) {
+            if (isDeviceSuitable(device)) {
+                physicalDevice = device;
+                return;
+            }
+        }
+
+        throw std::runtime_error("no suitable physical device found");
+    }
+
+    bool isDeviceSuitable(VkPhysicalDevice device) {
         return true;
     }
 
