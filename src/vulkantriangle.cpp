@@ -11,6 +11,16 @@
 const int WIDTH = 800;
 const int HEIGHT = 600;
 
+const std::vector<const char*> validationLayers = {
+    "VK_LAYER_KHRONOS_validation",
+};
+
+#ifdef NDEBUG
+const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
+#endif
+
 class HelloTriangleApplication {
 public:
     void run() {
@@ -38,6 +48,10 @@ private:
     }
 
     void createInstance() {
+        if (enableValidationLayers && !checkValidationLayersSupport()) {
+            throw std::runtime_error("validation layers required, but not found");
+        }
+
         VkApplicationInfo appInfo = {};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
         appInfo.pApplicationName = "Hello Triangle";
@@ -78,11 +92,40 @@ private:
         createInfo.enabledExtensionCount = glfwExtensionCount;
         createInfo.ppEnabledExtensionNames = glfwExtensions;
 
-        createInfo.enabledLayerCount = 0;
+        if (enableValidationLayers) {
+            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+            createInfo.ppEnabledLayerNames = validationLayers.data();
+        } else {
+            createInfo.enabledLayerCount = 0;
+        }
 
         if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
             throw std::runtime_error("failed to create instance!");
         }
+    }
+
+    bool checkValidationLayersSupport() {
+        uint32_t layer_count;
+        vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+
+        std::vector<VkLayerProperties> availableLayers(layer_count);
+        vkEnumerateInstanceLayerProperties(&layer_count, availableLayers.data());
+
+        for (const char* layerName : validationLayers) {
+            bool layerFound = false;
+
+            for (const auto& layerProperties : availableLayers) {
+                if (strcmp(layerName, layerProperties.layerName) == 0) {
+                    layerFound = true;
+                    break;
+                }
+            }
+
+            if (!layerFound)
+                return false;
+        }
+
+        return true;
     }
 
     void mainLoop() {
