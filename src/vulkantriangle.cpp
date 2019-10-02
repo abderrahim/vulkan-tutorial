@@ -45,6 +45,9 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     VkSwapchainKHR swapchain;
+    std::vector<VkImage> swapchainImages;
+    VkFormat swapChainImageFormat;
+    VkExtent2D swapChainExtent;
 
     void initWindow() {
         glfwInit();
@@ -366,6 +369,14 @@ private:
         if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
             throw std::runtime_error("failed to create swapchain");
         }
+
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
+
+        swapchainImages.resize(imageCount);
+        vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchainImages.data());
+
+        swapChainImageFormat = surfaceFormat.format;
+        swapChainExtent = extent;
     }
 
     VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
